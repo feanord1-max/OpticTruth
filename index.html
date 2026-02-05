@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpticTruth | Modern Gallery</title>
+    <meta name="description" content="A high-end, minimalist photography platform.">
+
+
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/grid.css">
+    <link rel="stylesheet" href="./css/components.css">
+
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-container">
+        <header class="site-header">
+            <div class="logo">OpticTruth</div>
+            <nav class="site-nav">
+                <a href="signin.html">Sign In</a>
+                <a href="index.html" class="active">Gallery</a>
+                <a href="profile.html">My Pictures</a>
+                <a href="settings.html">Settings</a>
+                <button id="theme-toggle" aria-label="Toggle Dark Mode">
+                    <!-- Icon SVG placeholder -->
+                    <span class="theme-icon">◐</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <h1>The Truth is in the Lens</h1>
+                <p class="hero-subtext">A social sanctuary for authentic film and digital photography. No AI. No fakes.
+                    Just light.</p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" id="join-btn">Join the Movement</button>
+                    <button class="btn btn-secondary" id="view-gallery-btn">View Gallery</button>
+                </div>
+            </div>
+            <div class="hero-card-container">
+                <article class="photo-card hero-card">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800&sat=-100"
+                        alt="Film Portrait" loading="eager">
+                    <div class="photo-overlay visible">
+                        <div class="hero-meta">
+                            <span class="badge">Photo of the Day</span>
+                            <div class="meta-details">
+                                <span>1/250s</span> • <span>f/2.8</span> • <span>Portra 400</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Film Strip Section -->
+        <section class="film-strip-section">
+            <h2 class="section-title">Analog Stream</h2>
+            <div class="film-strip-container" id="film-strip">
+                <!-- Film photos injected here -->
+            </div>
+        </section>
+
+        <main id="main-content" class="gallery-grid">
+            <!-- Photos will be injected here by JS -->
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 OpticTruth. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <!-- Photo Details Modal -->
+    <div id="photo-modal" class="modal hidden">
+        <div class="modal-content">
+            <button class="close-btn" aria-label="Close modal">&times;</button>
+            <figure class="modal-figure">
+                <img src="" alt="" id="modal-image">
+                <figcaption id="modal-caption"></figcaption>
+            </figure>
+            <div class="modal-details">
+                <h3 id="modal-title"></h3>
+                <p id="modal-meta"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="./js/common.js"></script>
+    <script type="module" src="./js/main.js"></script>
+    <script>
+        // Simple Dark Mode Script with Persistence
+        const toggle = document.getElementById('theme-toggle');
+        const themeIcon = toggle.querySelector('.theme-icon');
+
+        // Load state
+        if (localStorage.getItem('optic-theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+
+        toggle.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('optic-theme', isDark ? 'dark' : 'light');
+        });
+
+        // Link to submit page
+        document.getElementById('submit-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'submit.html';
+        });
+    </script>
+</body>
+
+</html>

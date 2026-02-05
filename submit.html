@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Captured Light | OpticTruth</title>
+
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/grid.css">
+    <link rel="stylesheet" href="./css/components.css">
+
+    <style>
+        /* Inline page-specific styles for simplicity */
+        .submit-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-lg);
+            padding: var(--spacing-xl) 0;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .submit-container {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--color-accent);
+            border-radius: 8px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.02);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            background: rgba(0, 0, 0, 0.05);
+            border-color: var(--color-text);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--color-text-light);
+        }
+
+        .metadata-sidebar {
+            background: rgba(0, 0, 0, 0.03);
+            padding: var(--spacing-md);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .metadata-sidebar h3 {
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--color-accent);
+            padding-bottom: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .meta-group {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .meta-label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--color-text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .meta-value {
+            font-family: monospace;
+            font-size: 1rem;
+            color: var(--color-text);
+        }
+
+        .metadata-sidebar .form-input {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .certify-check {
+            margin-top: var(--spacing-lg);
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: flex-start;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="checkbox"] {
+            margin-top: 4px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #preview-img {
+            max-width: 100%;
+            max-height: 100%;
+            display: none;
+            object-fit: contain;
+        }
+
+        .upload-text {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-container">
+        <header class="site-header">
+            <div class="logo"><a href="index.html">OpticTruth</a></div>
+            <nav class="site-nav">
+                <a href="signin.html">Sign In</a>
+                <a href="index.html">Gallery</a>
+                <a href="profile.html">My Pictures</a>
+                <a href="settings.html">Settings</a>
+                <button id="theme-toggle" aria-label="Toggle Dark Mode">
+                    <span class="theme-icon">◐</span>
+                </button>
+            </nav>
+        </header>
+
+        <main class="submit-container">
+            <section class="upload-section">
+                <h2>Submit Entry</h2>
+                <p style="color: var(--color-text-light); margin-bottom: var(--spacing-md);">Drag and drop your RAW file
+                    or high-res scan.</p>
+
+                <div class="toggle-group">
+                    <label>
+                        <input type="radio" name="source-type" value="film" checked> Film Scan
+                    </label>
+                    <label>
+                        <input type="radio" name="source-type" value="digital"> Digital RAW
+                    </label>
+                </div>
+
+                <div class="upload-zone" id="drop-zone">
+                    <input type="file" id="file-input" accept="image/*">
+                    <div class="upload-text">
+                        <div class="upload-icon">⏏</div>
+                        <h3>Drag & Drop Photo</h3>
+                        <p>or click to browse</p>
+                    </div>
+                    <img id="preview-img" src="" alt="Preview">
+                </div>
+            </section>
+
+            <aside class="metadata-sidebar">
+                <h3>Photo Details</h3>
+
+                <div class="meta-group">
+                    <label class="meta-label" for="meta-camera">Camera Body</label>
+                    <input type="text" id="meta-camera" class="form-input" placeholder="e.g. Leica M6">
+                </div>
+
+                <div class="meta-group">
+                    <label class="meta-label" for="meta-lens">Lens</label>
+                    <input type="text" id="meta-lens" class="form-input" placeholder="e.g. Summicron 35mm">
+                </div>
+
+                <div class="meta-group">
+                    <label class="meta-label" for="meta-exposure">Aperture / Shutter</label>
+                    <input type="text" id="meta-exposure" class="form-input" placeholder="e.g. f/8 at 1/125s">
+                </div>
+
+                <div class="meta-group">
+                    <label class="meta-label" for="meta-iso">ISO / Film Stock</label>
+                    <input type="text" id="meta-iso" class="form-input" placeholder="e.g. Portra 400">
+                </div>
+
+                <div class="meta-group">
+                    <label class="meta-label" for="meta-date">Date Captured</label>
+                    <input type="text" id="meta-date" class="form-input" placeholder="YYYY/MM/DD">
+                </div>
+
+                <div class="meta-group">
+                    <label class="meta-label">Visibility</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; font-size: 0.9rem; cursor: pointer;">
+                            <input type="radio" name="visibility" value="public" checked style="margin-right: 6px;">
+                            Public
+                        </label>
+                        <label style="display: flex; align-items: center; font-size: 0.9rem; cursor: pointer;">
+                            <input type="radio" name="visibility" value="private" style="margin-right: 6px;"> Private
+                        </label>
+                    </div>
+                </div>
+
+                <div class="certify-check">
+                    <input type="checkbox" id="ai-check">
+                    <label for="ai-check">
+                        <strong>I certify</strong> that this image was captured by a physical lens and contains no
+                        generative AI elements. I understand that falsifying this claim will result in a permanent ban.
+                    </label>
+                </div>
+
+                <div style="margin-top: var(--spacing-lg);">
+                    <button id="submit-btn" class="btn btn-primary" style="width: 100%;" disabled>Verify &
+                        Publish</button>
+                </div>
+            </aside>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 OpticTruth. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="./js/common.js"></script>
+    <script src="./js/exif.js"></script>
+    <script src="./js/heic2any.min.js"></script>
+    <script type="module" src="./js/submit.js"></script>
+    <script>
+        // Theme toggle logic (reused)
+        const toggle = document.getElementById('theme-toggle');
+        toggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+        });
+    </script>
+</body>
+
+</html>

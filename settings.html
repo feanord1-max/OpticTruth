@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings | OpticTruth</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Styles -->
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/components.css">
+    <style>
+        .settings-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) 0;
+        }
+
+        .settings-group {
+            background: rgba(0, 0, 0, 0.03);
+            padding: var(--spacing-lg);
+            border-radius: 8px;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .settings-group h3 {
+            margin-bottom: var(--spacing-md);
+            border-bottom: 1px solid var(--color-accent);
+            padding-bottom: var(--spacing-sm);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-sm) 0;
+        }
+
+        .danger-zone {
+            border: 1px solid #ff4444;
+            background: rgba(255, 68, 68, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-container">
+        <header class="site-header">
+            <div class="logo"><a href="index.html">OpticTruth</a></div>
+            <nav class="site-nav">
+                <a href="signin.html">Sign In</a>
+                <a href="index.html">Gallery</a>
+                <a href="profile.html">My Pictures</a>
+                <a href="#" class="active">Settings</a>
+                <button id="theme-toggle" aria-label="Toggle Dark Mode">
+                    <span class="theme-icon">◐</span>
+                </button>
+            </nav>
+        </header>
+
+        <main class="settings-container">
+            <h1>Settings</h1>
+
+            <section class="settings-group">
+                <h3>Preferences</h3>
+                <div class="setting-item">
+                    <span>Dark Mode</span>
+                    <!-- Reusing the global toggle logic but could be a switch here -->
+                    <span style="font-size: 0.9rem; opacity: 0.7;">Use toggle in header</span>
+                </div>
+                <div class="setting-item">
+                    <span>Email Notifications</span>
+                    <input type="checkbox" checked>
+                </div>
+            </section>
+
+            <section class="settings-group">
+                <h3>Account</h3>
+                <div class="setting-item">
+                    <span>Display Name</span>
+                    <strong>Dylan Jones</strong>
+                </div>
+                <div class="setting-item">
+                    <span>Email</span>
+                    <span>********@example.com</span>
+                </div>
+                <div class="setting-item">
+                    <button class="btn btn-secondary" style="font-size: 0.9rem;">Change Password</button>
+                </div>
+            </section>
+
+            <section class="settings-group danger-zone">
+                <h3 style="color: #d32f2f; border-color: rgba(211, 47, 47, 0.3);">Danger Zone</h3>
+                <div class="setting-item">
+                    <span>Delete Account</span>
+                    <button class="btn btn-primary" style="background: #d32f2f; border: none;">Delete</button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="site-footer">
+            <p>&copy; 2026 OpticTruth. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="./js/common.js"></script>
+    <script>
+        const toggle = document.getElementById('theme-toggle');
+        if (localStorage.getItem('optic-theme') === 'dark') document.body.classList.add('dark-mode');
+        toggle.addEventListener('click', () => {
+            const isDark = document.body.classList.toggle('dark-mode');
+            localStorage.setItem('optic-theme', isDark ? 'dark' : 'light');
+        });
+    </script>
+</body>
+
+</html>
