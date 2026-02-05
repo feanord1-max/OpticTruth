@@ -89,7 +89,10 @@ function init() {
 }
 
 function renderGallery() {
-    galleryGrid.innerHTML = photoData.map(photo => `
+    // Sort by vouches (descending)
+    const sortedData = [...photoData].sort((a, b) => b.vouches - a.vouches);
+
+    galleryGrid.innerHTML = sortedData.map(photo => `
         <article class="photo-card ${photo.type || ''}" data-id="${photo.id}">
             <div class="verified-badge" title="Verified Authentic">✓</div>
             <img src="${photo.src}" alt="${photo.title}" loading="lazy">
@@ -102,7 +105,7 @@ function renderGallery() {
                         ${photo.tags.map(tag => `<span class="photo-tag">${tag}</span>`).join('')}
                     </div>
                     <button class="vouch-btn" onclick="event.stopPropagation(); toggleVouch(this)">
-                        Vouch (${photo.vouches})
+                        <span class="vouch-icon">♡</span> <span class="vouch-count">${photo.vouches}</span>
                     </button>
                 </div>
             </div>
@@ -125,17 +128,22 @@ function renderFilmStrip() {
 window.toggleVouch = function (btn) {
     // Mock Vouch Logic
     const isVouched = btn.classList.contains('vouched');
-    let count = parseInt(btn.innerText.match(/\d+/)[0]);
+    const countSpan = btn.querySelector('.vouch-count');
+    const iconSpan = btn.querySelector('.vouch-icon');
+
+    let count = parseInt(countSpan.innerText);
 
     if (isVouched) {
         count--;
         btn.classList.remove('vouched');
+        iconSpan.innerText = '♡';
     } else {
         count++;
         btn.classList.add('vouched');
+        iconSpan.innerText = '♥';
     }
 
-    btn.innerText = `Vouch (${count})`;
+    countSpan.innerText = count;
 }
 
 // Event Listeners

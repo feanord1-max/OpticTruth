@@ -214,14 +214,22 @@
 }
 
 .vouch-btn:hover {
-    background: white;
-    color: black;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .vouch-btn.vouched {
-    background: white;
-    color: black;
-    border-color: white;
+    background: rgba(229, 62, 62, 0.1);
+    /* Subtle red bg */
+    color: #fc8181;
+    /* Red Text */
+    border-color: #fc8181;
+}
+
+.vouch-icon {
+    font-size: 1.1em;
+    margin-right: 4px;
+    vertical-align: middle;
 }
 
 .tags-list {
@@ -392,3 +400,4 @@ body.dark-mode .btn-secondary:hover {
         padding-top: var(--spacing-lg);
         border-top: 1px solid rgba(0, 0, 0, 0.1);
     }
+}
