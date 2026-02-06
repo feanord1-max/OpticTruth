@@ -100,7 +100,8 @@
                 <div class="profile-stats">
                     <div class="stat-item"><span class="stat-val" id="upload-count">0</span><span
                             class="stat-label">Captures</span></div>
-                    <div class="stat-item"><span class="stat-val">12</span><span class="stat-label">Vouched</span></div>
+                    <div class="stat-item"><span class="stat-val" id="vouch-count">0</span><span
+                            class="stat-label">Vouched</span></div>
                 </div>
             </div>
             <div style="margin-left: auto;">
@@ -109,7 +110,7 @@
         </section>
 
         <div class="section-tabs">
-            <div class="tab active">My Captures</div>
+            <div class="tab active">My Captures (Debug Mode)</div>
             <div class="tab">Vouched For</div>
         </div>
 
@@ -132,7 +133,7 @@
     </div>
 
     <script src="./js/common.js"></script>
-    <script type="module" src="./js/profile.js"></script>
+    <script type="module" src="./js/profile.js?v=debug"></script>
     <script>
         // Dark Mode Check
         const toggle = document.getElementById('theme-toggle');
