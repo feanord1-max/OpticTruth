@@ -73,11 +73,19 @@ function renderGallery() {
 
 function updateFilmStrip(topPhotos) {
     if (!filmStripContainer || topPhotos.length === 0) return;
-    filmStripContainer.innerHTML = topPhotos.map(photo => `
-        <div class="film-item">
-            <img src="${photo.src}" alt="Analog Stream" loading="lazy" onclick="openModal('${photo.id}')" style="cursor:pointer">
+    filmStripContainer.innerHTML = topPhotos.map(photo => {
+        const isLiked = savedLikes.includes(photo.id);
+        return `
+        <div class="film-item" onclick="openModal('${photo.id}')">
+            <img src="${photo.src}" alt="Analog Stream" loading="lazy">
+            <button class="vouch-btn ${isLiked ? 'vouched' : ''}" 
+                style="position: absolute; bottom: 8px; right: 8px; padding: 6px 10px; font-size: 0.75rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; z-index: 10;"
+                onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
+                <span class="vouch-icon">${isLiked ? '♥' : '♡'}</span> 
+                <span class="vouch-count">${photo.vouches || 0}</span>
+            </button>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 function loadHeroImage() {
