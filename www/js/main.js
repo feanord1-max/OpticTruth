@@ -12,14 +12,38 @@ const modalTitle = document.getElementById('modal-title');
 const modalMeta = document.getElementById('modal-meta');
 const closeBtn = document.querySelector('.close-btn');
 
+// State
+let realPhotos = [];
+let currentUser = null;
+let savedLikes = []; // Will be loaded based on user
+
+// DOM Elements
+const galleryGrid = document.getElementById('main-content');
+const modal = document.getElementById('photo-modal');
+const modalImg = document.getElementById('modal-image');
+const modalTitle = document.getElementById('modal-title');
+const modalMeta = document.getElementById('modal-meta');
+const closeBtn = document.querySelector('.close-btn');
+
 function init() {
-    renderGallery();
+    // Wait for auth to be determined before rendering fully user-dependent UI
+    firebase.auth().onAuthStateChanged((user) => {
+        currentUser = user;
+        if (user) {
+            savedLikes = JSON.parse(localStorage.getItem(`optic-likes-${user.uid}`) || '[]');
+        } else {
+            savedLikes = [];
+        }
+        updateGalleryUI();
+    });
+
+    // Start listening to data immediately
+    listenForPhotos();
     loadHeroImage();
     setupEventListeners();
 }
 
-function renderGallery() {
-    // 1. Listen for real data 
+function listenForPhotos() {
     firebase.firestore().collection('photos')
         .limit(50)
         .onSnapshot((snapshot) => {
@@ -27,50 +51,45 @@ function renderGallery() {
             snapshot.forEach((doc) => {
                 realPhotos.push({ id: doc.id, ...doc.data() });
             });
-
-            // 2. Sort Client-Side (Most Vouches First)
+            // Sort: Most Vouches First
             realPhotos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
-
-            // 3. Update Film Strip (Removed)
-            // updateFilmStrip(realPhotos.slice(0, 5));
-
-            // 4. Render Grid
-            if (realPhotos.length === 0) {
-                if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: #888;">No photos yet. Be the first to upload!</p>';
-                return;
-            }
-
-            if (galleryGrid) {
-                galleryGrid.innerHTML = realPhotos.map(photo => {
-                    const isLiked = savedLikes.includes(photo.id);
-                    return `
-                    <article class="photo-card ${photo.type || ''}" data-id="${photo.id}">
-                        <div class="verified-badge" title="Verified Authentic">✓</div>
-                        <img src="${photo.src}" alt="${photo.title}" loading="lazy">
-                        <div class="photo-overlay">
-                            <h3>${photo.title || 'Untitled'}</h3>
-                            <p class="photographer-meta">${photo.photographer} <span style="opacity:0.6">• ${photo.camera || 'Analog'}</span></p>
-                            
-                            <div class="interaction-bar">
-                                 <div class="tags-list">
-                                    ${(photo.tags || []).map(tag => `<span class="photo-tag">${tag}</span>`).join('')}
-                                </div>
-                                <button class="vouch-btn ${isLiked ? 'vouched' : ''}" onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
-                                    <span class="vouch-icon">${isLiked ? '♥' : '♡'}</span> <span class="vouch-count">${photo.vouches || 0}</span>
-                                </button>
-                            </div>
-                        </div>
-                    </article>
-                `}).join('');
-            }
-
+            updateGalleryUI();
         }, (error) => {
             console.error("Error getting photos: ", error);
             if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: red;">Error loading feed. Try refreshing.</p>';
         });
 }
 
-// function updateFilmStrip(topPhotos) { ... } removed
+function updateGalleryUI() {
+    if (!galleryGrid) return;
+
+    if (realPhotos.length === 0) {
+        galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: #888;">No photos yet. Be the first to upload!</p>';
+        return;
+    }
+
+    galleryGrid.innerHTML = realPhotos.map(photo => {
+        const isLiked = savedLikes.includes(photo.id);
+        return `
+        <article class="photo-card ${photo.type || ''}" data-id="${photo.id}">
+            <div class="verified-badge" title="Verified Authentic">✓</div>
+            <img src="${photo.src}" alt="${photo.title}" loading="lazy">
+            <div class="photo-overlay">
+                <h3>${photo.title || 'Untitled'}</h3>
+                <p class="photographer-meta">${photo.photographer} <span style="opacity:0.6">• ${photo.camera || 'Analog'}</span></p>
+                
+                <div class="interaction-bar">
+                        <div class="tags-list">
+                        ${(photo.tags || []).map(tag => `<span class="photo-tag">${tag}</span>`).join('')}
+                    </div>
+                    <button class="vouch-btn ${isLiked ? 'vouched' : ''}" onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
+                        <span class="vouch-icon">${isLiked ? '♥' : '♡'}</span> <span class="vouch-count">${photo.vouches || 0}</span>
+                    </button>
+                </div>
+            </div>
+        </article>
+    `}).join('');
+}
 
 function loadHeroImage() {
     const heroImg = document.querySelector('.hero-card img');
@@ -105,11 +124,8 @@ function loadHeroImage() {
         });
 }
 
-// function renderFilmStrip() { ... } removed
-
 window.toggleVouch = function (btn, docId) {
-    const user = firebase.auth().currentUser;
-    if (!user) {
+    if (!currentUser) {
         alert("Please sign in to vouch/like photos.");
         window.location.href = 'signin.html';
         return;
@@ -138,8 +154,8 @@ window.toggleVouch = function (btn, docId) {
         savedLikes.push(docId);
     }
 
-    // Save Local State
-    localStorage.setItem('optic-likes', JSON.stringify(savedLikes));
+    // Save Local State using UID Key
+    localStorage.setItem(`optic-likes-${currentUser.uid}`, JSON.stringify(savedLikes));
     countSpan.innerText = count;
 
     // Firestore Update
