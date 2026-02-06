@@ -66,14 +66,17 @@ function updateNavigation(userLoggedIn) {
     }
 
     // 2. Handle Sign In / Sign Out
-    const signinLink = nav.querySelector('a[href="signin.html"]');
-    if (signinLink) {
+    // 2. Handle Sign In / Sign Out
+    const authLink = document.getElementById('auth-link');
+    if (authLink) {
+        // Clone to strip existing listeners (important for toggling state)
+        const newLink = authLink.cloneNode(true);
+        authLink.parentNode.replaceChild(newLink, authLink);
+
         if (loggedIn) {
-            signinLink.textContent = 'Sign Out';
-            signinLink.href = '#';
-            // Remove old listeners to avoid duplicates if called multiple times
-            const newLink = signinLink.cloneNode(true);
-            signinLink.parentNode.replaceChild(newLink, signinLink);
+            newLink.textContent = 'Sign Out';
+            newLink.href = '#';
+            newLink.classList.remove('active'); // Optional: remove active if on signin page
 
             newLink.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -81,8 +84,9 @@ function updateNavigation(userLoggedIn) {
             });
         } else {
             // Reset to Sign In state
-            signinLink.textContent = 'Sign In';
-            signinLink.href = 'signin.html';
+            newLink.textContent = 'Sign In';
+            newLink.href = 'signin.html';
+            // Default behavior (navigate to href) applies
         }
     }
 }
