@@ -15,7 +15,6 @@ const closeBtn = document.querySelector('.close-btn');
 function init() {
     renderGallery();
     loadHeroImage();
-    renderFilmStrip();
     setupEventListeners();
 }
 
@@ -32,8 +31,8 @@ function renderGallery() {
             // 2. Sort Client-Side (Most Vouches First)
             realPhotos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
 
-            // 3. Update Film Strip with Top 5
-            updateFilmStrip(realPhotos.slice(0, 5));
+            // 3. Update Film Strip (Removed)
+            // updateFilmStrip(realPhotos.slice(0, 5));
 
             // 4. Render Grid
             if (realPhotos.length === 0) {
@@ -71,22 +70,7 @@ function renderGallery() {
         });
 }
 
-function updateFilmStrip(topPhotos) {
-    if (!filmStripContainer || topPhotos.length === 0) return;
-    filmStripContainer.innerHTML = topPhotos.map(photo => {
-        const isLiked = savedLikes.includes(photo.id);
-        return `
-        <div class="film-item" onclick="openModal('${photo.id}')">
-            <img src="${photo.src}" alt="Analog Stream" loading="lazy">
-            <button class="vouch-btn ${isLiked ? 'vouched' : ''}" 
-                style="position: absolute; bottom: 8px; right: 8px; padding: 6px 10px; font-size: 0.75rem; background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; z-index: 10;"
-                onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
-                <span class="vouch-icon">${isLiked ? '♥' : '♡'}</span> 
-                <span class="vouch-count">${photo.vouches || 0}</span>
-            </button>
-        </div>
-    `}).join('');
-}
+// function updateFilmStrip(topPhotos) { ... } removed
 
 function loadHeroImage() {
     const heroImg = document.querySelector('.hero-card img');
@@ -121,9 +105,7 @@ function loadHeroImage() {
         });
 }
 
-function renderFilmStrip() {
-    // Initial placeholder, sorted/updated by renderGallery
-}
+// function renderFilmStrip() { ... } removed
 
 window.toggleVouch = function (btn, docId) {
     const user = firebase.auth().currentUser;
