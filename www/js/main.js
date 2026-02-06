@@ -74,7 +74,7 @@ const filmStripData = [
 ];
 
 // DOM Elements
-const galleryGrid = document.getElementById('main-content');
+// galleryGrid is defined below in scope
 const filmStripContainer = document.getElementById('film-strip');
 const modal = document.getElementById('photo-modal');
 const modalImg = document.getElementById('modal-image');
