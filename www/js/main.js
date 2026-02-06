@@ -1,19 +1,6 @@
 
 // State
 let realPhotos = [];
-const savedLikes = JSON.parse(localStorage.getItem('optic-likes') || '[]');
-
-// DOM Elements
-const galleryGrid = document.getElementById('main-content');
-const filmStripContainer = document.getElementById('film-strip');
-const modal = document.getElementById('photo-modal');
-const modalImg = document.getElementById('modal-image');
-const modalTitle = document.getElementById('modal-title');
-const modalMeta = document.getElementById('modal-meta');
-const closeBtn = document.querySelector('.close-btn');
-
-// State
-let realPhotos = [];
 let currentUser = null;
 let savedLikes = []; // Will be loaded based on user
 
