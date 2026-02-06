@@ -46,6 +46,9 @@ aiCheck.addEventListener('change', () => {
     validateForm();
 });
 
+// Submit Button Logic
+submitBtn.addEventListener('click', saveToProfile);
+
 // Flag to track if valid file is loaded
 let isFileLoaded = false;
 
