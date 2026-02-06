@@ -16,6 +16,9 @@ function loadProfile() {
         document.getElementById('user-name').textContent = user.displayName || 'Photographer';
         document.getElementById('user-handle').textContent = user.email; // Using email as handle for now
 
+        // Debug: Show UID to verify matches
+        console.log("Current User UID:", user.uid);
+
         // Fetch Photos
         // Note: We removed .orderBy('createdAt', 'desc') because it requires a specific
         // Composite Index in Firestore (uid + createdAt). 
@@ -26,13 +29,20 @@ function loadProfile() {
                 const photos = [];
                 snapshot.forEach(doc => photos.push({ id: doc.id, ...doc.data() }));
 
+                console.log("Found photos:", photos.length);
+
                 // Sort manually in JS to avoid Index requirement
                 photos.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 uploadCount.textContent = photos.length;
 
                 if (photos.length === 0) {
-                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.5;">No captures submitted yet. <a href="submit.html" style="text-decoration:underline;">Submit your first photo</a>.</p>';
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.5;">
+                            <p>No captures found for this user.</p>
+                            <p style="font-size:0.8em; margin-top:10px;">Debug ID: ${user.uid}</p>
+                            <a href="submit.html" style="text-decoration:underline;">Submit a photo</a>
+                        </div>`;
                     return;
                 }
 
@@ -58,7 +68,15 @@ function loadProfile() {
                 `).join('');
             }, (error) => {
                 console.error("Profile load error:", error);
-                grid.innerHTML = '<p style="color:red; padding:40px;">Error loading profile: ' + error.message + '</p>';
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1; color: red; padding: 20px; border: 1px solid red; background: #fff0f0;">
+                        <h3>Error Loading Profile</h3>
+                        <p>${error.message}</p>
+                        <p style="font-size: 0.8em; margin-top: 10px;">
+                            <strong>Possible Cause:</strong> Firestore Rules might still be blocking access.<br>
+                            Ensure "Cloud Firestore" Rules are set to "allow read, write: if request.auth != null;"
+                        </p>
+                    </div>`;
             });
     });
 }
