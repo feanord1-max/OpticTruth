@@ -17,12 +17,17 @@ function loadProfile() {
         document.getElementById('user-handle').textContent = user.email; // Using email as handle for now
 
         // Fetch Photos
+        // Note: We removed .orderBy('createdAt', 'desc') because it requires a specific
+        // Composite Index in Firestore (uid + createdAt). 
+        // For now, we fetch validation-free to ensure they appear.
         firebase.firestore().collection('photos')
             .where('uid', '==', user.uid)
-            .orderBy('createdAt', 'desc')
             .onSnapshot(snapshot => {
                 const photos = [];
                 snapshot.forEach(doc => photos.push({ id: doc.id, ...doc.data() }));
+
+                // Sort manually in JS to avoid Index requirement
+                photos.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
 
                 uploadCount.textContent = photos.length;
 
@@ -51,6 +56,9 @@ function loadProfile() {
                         </div>
                     </article>
                 `).join('');
+            }, (error) => {
+                console.error("Profile load error:", error);
+                grid.innerHTML = '<p style="color:red; padding:40px;">Error loading profile: ' + error.message + '</p>';
             });
     });
 }
