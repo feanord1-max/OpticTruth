@@ -95,17 +95,23 @@ function init() {
 const galleryGrid = document.getElementById('main-content'); // Moved up to valid scope
 
 function renderGallery() {
-    // 1. Listen for real data (Sorted by VOUCHES to show most popular first)
+    // 1. Listen for real data 
+    // Removed .orderBy('vouches', 'desc') to avoid Composite Index requirement for MVP
     firebase.firestore().collection('photos')
-        .orderBy('vouches', 'desc')
-        .limit(20)
+        .limit(50)
         .onSnapshot((snapshot) => {
             const photos = [];
             snapshot.forEach((doc) => {
                 photos.push({ id: doc.id, ...doc.data() });
             });
 
-            // 2. Render Loop
+            // 2. Sort Client-Side (Most Vouches First)
+            photos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
+
+            // 3. Update Film Strip with Top 5 (or random 5)
+            updateFilmStrip(photos.slice(0, 5));
+
+            // 4. Render Grid
             if (photos.length === 0) {
                 galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: #888;">No photos yet. Be the first to upload!</p>';
                 return;
@@ -117,13 +123,13 @@ function renderGallery() {
                     <img src="${photo.src}" alt="${photo.title}" loading="lazy">
                     <div class="photo-overlay">
                         <h3>${photo.title}</h3>
-                        <p class="photographer-meta">${photo.photographer} <span style="opacity:0.6">• ${photo.camera}</span></p>
+                        <p class="photographer-meta">${photo.photographer} <span style="opacity:0.6">• ${photo.camera || 'Analog'}</span></p>
                         
                         <div class="interaction-bar">
                              <div class="tags-list">
                                 ${(photo.tags || []).map(tag => `<span class="photo-tag">${tag}</span>`).join('')}
                             </div>
-                            <button class="vouch-btn" onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
+                            <button class="vouch-btn ${(photo.vouches > 0) ? '' : ''}" onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
                                 <span class="vouch-icon">♡</span> <span class="vouch-count">${photo.vouches || 0}</span>
                             </button>
                         </div>
@@ -133,32 +139,45 @@ function renderGallery() {
 
         }, (error) => {
             console.error("Error getting photos: ", error);
+            galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: red;">Error loading feed. Try refreshing.</p>';
         });
 }
 
+function updateFilmStrip(topPhotos) {
+    const filmStripContainer = document.getElementById('film-strip');
+    if (!filmStripContainer || topPhotos.length === 0) return;
+
+    filmStripContainer.innerHTML = topPhotos.map(photo => `
+        <div class="film-item">
+            <img src="${photo.src}" alt="Analog Stream" loading="lazy">
+        </div>
+    `).join('');
+}
+
 function loadHeroImage() {
-    // ... (rest of function)
-
     const heroImg = document.querySelector('.hero-card img');
-    // Optional: Hero Meta elements
-
     if (!heroImg) return;
 
+    // Use same client-side sort strategy
     firebase.firestore().collection('photos')
-        .orderBy('vouches', 'desc')
-        .limit(1)
+        .limit(20)
         .get()
         .then((querySnapshot) => {
             if (!querySnapshot.empty) {
-                const doc = querySnapshot.docs[0];
-                const photo = doc.data();
+                const photos = [];
+                querySnapshot.forEach(doc => photos.push(doc.data()));
 
-                // Update Image
-                heroImg.src = photo.src;
+                // Sort by vouches
+                photos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
 
-                // Update Meta (Optional - assuming elements exist or we inject them)
-                // const metaContainer = document.querySelector('.hero-meta .meta-details');
-                // if (metaContainer) metaContainer.innerHTML = ...
+                if (photos.length > 0) {
+                    const topPhoto = photos[0];
+                    heroImg.src = topPhoto.src;
+
+                    // Optional: Update Badge
+                    const badge = document.querySelector('.hero-meta .badge');
+                    if (badge) badge.textContent = `Top Rated: ${topPhoto.title || 'Untitled'}`;
+                }
             }
         })
         .catch((error) => {
