@@ -8,21 +8,47 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHeroState();
 });
 
+// function isLoggedIn() {
+//     return !!localStorage.getItem('optic-user');
+// }
+
+// New Auth Logic: We rely on Firebase observer, but for synchronous UI checks, 
+// we might need to wait or check current user. 
+// Since Firebase is async, we'll listen for state changes.
+
+firebase.auth().onAuthStateChanged((user) => {
+    if (user) {
+        // User is signed in.
+        localStorage.setItem('optic-user', JSON.stringify({
+            uid: user.uid,
+            name: user.displayName,
+            email: user.email
+        }));
+        updateNavigation(true);
+        updateHeroState(true);
+    } else {
+        // User is signed out.
+        localStorage.removeItem('optic-user');
+        updateNavigation(false);
+        updateHeroState(false);
+    }
+});
+
 function isLoggedIn() {
-    return !!localStorage.getItem('optic-user');
+    return !!firebase.auth().currentUser || !!localStorage.getItem('optic-user');
 }
 
-function updateNavigation() {
+function updateNavigation(userLoggedIn) {
     const nav = document.querySelector('.site-nav');
     if (!nav) return;
 
-    // We need to preserve the "active" class logic, so we'll just append/modify links
-    // Ideally we would rebuild the nav, but let's just inject the 'Submit' link if missing
+    // Use argument if provided, otherwise fallback
+    const loggedIn = userLoggedIn !== undefined ? userLoggedIn : isLoggedIn();
 
     // 1. Check if we strictly need to add the Submit link
     const hasSubmit = nav.querySelector('a[href="submit.html"]');
 
-    if (isLoggedIn()) {
+    if (loggedIn) {
         if (!hasSubmit) {
             // Insert Submit after Gallery (index of 1 usually) or just append
             const submitLink = document.createElement('a');
@@ -40,43 +66,64 @@ function updateNavigation() {
     }
 
     // 2. Handle Sign In / Sign Out
-    // Look for existing Sign In link
     const signinLink = nav.querySelector('a[href="signin.html"]');
     if (signinLink) {
-        if (isLoggedIn()) {
+        if (loggedIn) {
             signinLink.textContent = 'Sign Out';
             signinLink.href = '#';
-            signinLink.addEventListener('click', (e) => {
+            // Remove old listeners to avoid duplicates if called multiple times
+            const newLink = signinLink.cloneNode(true);
+            signinLink.parentNode.replaceChild(newLink, signinLink);
+
+            newLink.addEventListener('click', (e) => {
                 e.preventDefault();
                 logout();
             });
+        } else {
+            // Reset to Sign In state
+            signinLink.textContent = 'Sign In';
+            signinLink.href = 'signin.html';
         }
     }
 }
 
-function updateHeroState() {
-    const heroBtn = document.getElementById('join-btn');
-    if (!heroBtn) return;
+function updateHeroState(userLoggedIn) {
+    const uploadBtn = document.getElementById('hero-upload-btn');
+    const createBtn = document.getElementById('hero-create-btn');
+    const galleryBtn = document.getElementById('hero-gallery-btn');
 
-    if (isLoggedIn()) {
-        heroBtn.textContent = 'Upload Photo';
-        // Remove old listeners (by cloning) or just update behavior if we handled it in main.js
-        // Since main.js adds a listener, let's just override the behavior if we can,
-        // but easier: just change the ID or handle the click logic based on text/state in main.js
-        // OR: simpler here, we assume main.js navigates to signin.html. 
-        // We can overwrite the onclick if it was set via property, but it was set via addEventListener.
-        // Let's replace the node to clear listeners.
+    // If buttons don't exist (e.g. not on index.html), return
+    if (!uploadBtn) return;
 
-        const newBtn = heroBtn.cloneNode(true);
-        heroBtn.parentNode.replaceChild(newBtn, heroBtn);
+    const loggedIn = userLoggedIn !== undefined ? userLoggedIn : isLoggedIn();
 
-        newBtn.addEventListener('click', () => {
-            window.location.href = 'submit.html';
-        });
+    if (loggedIn) {
+        // State: Logged In
+        // Show: Upload, View Gallery
+        // Hide: Create Account
+        if (createBtn) createBtn.style.display = 'none';
+        if (galleryBtn) galleryBtn.style.display = 'inline-block';
+
+        // Ensure listeners function correctly
+        uploadBtn.onclick = () => window.location.href = 'submit.html';
+        if (galleryBtn) galleryBtn.onclick = () => window.location.href = 'profile.html';
+
+    } else {
+        // State: Logged Out
+        // Show: Upload (leads to login), Create Account
+        // Hide: View Gallery
+        if (createBtn) createBtn.style.display = 'inline-block';
+        if (galleryBtn) galleryBtn.style.display = 'none';
+
+        // Listeners for Logged Out state
+        uploadBtn.onclick = () => window.location.href = 'signin.html';
+        if (createBtn) createBtn.onclick = () => window.location.href = 'signin.html';
     }
 }
 
 function logout() {
-    localStorage.removeItem('optic-user');
-    window.location.href = 'index.html';
+    firebase.auth().signOut().then(() => {
+        // Sign-out successful.
+        window.location.href = 'index.html';
+    });
 }

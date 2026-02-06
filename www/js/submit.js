@@ -181,12 +181,29 @@ function handleFile(file) {
 
 
 // Save Functionality with Resizing (to avoid LocalStorage limits)
-function saveToProfile() {
+// Save Functionality (Firebase Storage + Firestore)
+async function saveToProfile() {
+    const user = firebase.auth().currentUser;
+
+    if (!user) {
+        alert("You must be signed in to upload.");
+        window.location.href = 'signin.html';
+        return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Uploading...';
+
+    // 1. Get the file (we'll use the original or converted file)
+    // For simplicity with HEIC conversion logic above, we can just grab the src from preview
+    // convert it to blob, OR better: store the 'currentFile' in a global variable in handleFile
+    // But since we have resize logic in the old one, let's keep the resize/canvas approach 
+    // to keep uploads small/fast for this MVP.
+
+    // Create canvas to resize/compress
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
-    // Calculate new size (max width 600px for thumbnail)
-    const MAX_WIDTH = 600;
+    const MAX_WIDTH = 1200; // Better quality than 600
     let width = previewImg.naturalWidth;
     let height = previewImg.naturalHeight;
 
@@ -199,30 +216,39 @@ function saveToProfile() {
     canvas.height = height;
     ctx.drawImage(previewImg, 0, 0, width, height);
 
-    const thumbnailData = canvas.toDataURL('image/jpeg', 0.7);
+    // Get Blob
+    canvas.toBlob(async (blob) => {
+        try {
+            // 2. Upload to Firebase Storage
+            const filename = `photos/${user.uid}/${Date.now()}.jpg`;
+            const storageRef = firebase.storage().ref().child(filename);
+            const snapshot = await storageRef.put(blob);
+            const downloadURL = await snapshot.ref.getDownloadURL();
 
-    try {
-        const uploads = JSON.parse(localStorage.getItem('my-uploads') || '[]');
+            // 3. Save Metadata to Firestore
+            await firebase.firestore().collection('photos').add({
+                uid: user.uid,
+                photographer: user.displayName || 'Anonymous',
+                src: downloadURL, // The public link
+                title: 'Untitled Capture',
+                camera: metaCamera.value,
+                lens: metaLens.value,
+                iso: metaIso.value,
+                exposure: metaExposure.value,
+                dateCaptured: metaDate.value,
+                vouches: 0,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                tags: ['Film', 'Community'] // Default tags
+            });
 
-        const newPhoto = {
-            id: Date.now(),
-            src: thumbnailData,
-            title: 'New Capture', // Could add a Title input too, but defaults ok
-            date: metaDate.value,
-            camera: metaCamera.value,
-            lens: metaLens.value,
-            iso: metaIso.value,
-            exposure: metaExposure.value
-        };
+            alert('Photo uploaded successfully!');
+            window.location.href = 'index.html'; // Go to feed to see it
 
-        uploads.unshift(newPhoto);
-        localStorage.setItem('my-uploads', JSON.stringify(uploads));
-
-        window.location.href = 'profile.html';
-    } catch (e) {
-        console.error(e);
-        alert('Storage Error: The image could not be saved.');
-    }
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Upload failed: " + error.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Verify & Publish';
+        }
+    }, 'image/jpeg', 0.85);
 }
-
-submitBtn.addEventListener('click', saveToProfile);

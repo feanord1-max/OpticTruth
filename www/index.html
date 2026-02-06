@@ -23,6 +23,15 @@
             scroll-behavior: smooth;
         }
     </style>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <!-- Config -->
+    <script src="./js/firebase-config.js"></script>
 </head>
 
 <body>
@@ -49,8 +58,10 @@
                 <p class="hero-subtext">A social sanctuary for authentic film and digital photography. No AI. No fakes.
                     Just light.</p>
                 <div class="hero-buttons">
-                    <button class="btn btn-primary" id="join-btn">Join the Movement</button>
-                    <button class="btn btn-secondary" id="view-gallery-btn">View Gallery</button>
+                    <button class="btn btn-primary" id="hero-upload-btn">Upload Photo</button>
+                    <button class="btn btn-secondary" id="hero-create-btn">Create Account</button>
+                    <button class="btn btn-secondary" id="hero-gallery-btn" style="display: none;">View Your
+                        Gallery</button>
                 </div>
             </div>
             <div class="hero-card-container">

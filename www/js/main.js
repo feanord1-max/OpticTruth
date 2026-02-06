@@ -84,38 +84,100 @@ const closeBtn = document.querySelector('.close-btn');
 
 function init() {
     renderGallery();
+    loadHeroImage();
     renderFilmStrip();
     setupEventListeners();
 }
 
-function renderGallery() {
-    // Sort by vouches (descending)
-    const sortedData = [...photoData].sort((a, b) => b.vouches - a.vouches);
+// galleryGrid is already defined in global scope above
 
-    galleryGrid.innerHTML = sortedData.map(photo => `
-        <article class="photo-card ${photo.type || ''}" data-id="${photo.id}">
-            <div class="verified-badge" title="Verified Authentic">✓</div>
-            <img src="${photo.src}" alt="${photo.title}" loading="lazy">
-            <div class="photo-overlay">
-                <h3>${photo.title}</h3>
-                <p class="photographer-meta">${photo.photographer} <span style="opacity:0.6">• ${photo.gear}</span></p>
-                
-                <div class="interaction-bar">
-                    <div class="tags-list">
-                        ${photo.tags.map(tag => `<span class="photo-tag">${tag}</span>`).join('')}
+
+const galleryGrid = document.getElementById('main-content'); // Moved up to valid scope
+
+function renderGallery() {
+    // 1. Listen for real data (Sorted by VOUCHES to show most popular first)
+    firebase.firestore().collection('photos')
+        .orderBy('vouches', 'desc')
+        .limit(20)
+        .onSnapshot((snapshot) => {
+            const photos = [];
+            snapshot.forEach((doc) => {
+                photos.push({ id: doc.id, ...doc.data() });
+            });
+
+            // 2. Render Loop
+            if (photos.length === 0) {
+                galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: #888;">No photos yet. Be the first to upload!</p>';
+                return;
+            }
+
+            galleryGrid.innerHTML = photos.map(photo => `
+                <article class="photo-card ${photo.type || ''}" data-id="${photo.id}">
+                    <div class="verified-badge" title="Verified Authentic">✓</div>
+                    <img src="${photo.src}" alt="${photo.title}" loading="lazy">
+                    <div class="photo-overlay">
+                        <h3>${photo.title}</h3>
+                        <p class="photographer-meta">${photo.photographer} <span style="opacity:0.6">• ${photo.camera}</span></p>
+                        
+                        <div class="interaction-bar">
+                             <div class="tags-list">
+                                ${(photo.tags || []).map(tag => `<span class="photo-tag">${tag}</span>`).join('')}
+                            </div>
+                            <button class="vouch-btn" onclick="event.stopPropagation(); toggleVouch(this, '${photo.id}')">
+                                <span class="vouch-icon">♡</span> <span class="vouch-count">${photo.vouches || 0}</span>
+                            </button>
+                        </div>
                     </div>
-                    <button class="vouch-btn" onclick="event.stopPropagation(); toggleVouch(this)">
-                        <span class="vouch-icon">♡</span> <span class="vouch-count">${photo.vouches}</span>
-                    </button>
-                </div>
-            </div>
-        </article>
-    `).join('');
+                </article>
+            `).join('');
+
+        }, (error) => {
+            console.error("Error getting photos: ", error);
+        });
+}
+
+function loadHeroImage() {
+    // ... (rest of function)
+
+    const heroImg = document.querySelector('.hero-card img');
+    // Optional: Hero Meta elements
+
+    if (!heroImg) return;
+
+    firebase.firestore().collection('photos')
+        .orderBy('vouches', 'desc')
+        .limit(1)
+        .get()
+        .then((querySnapshot) => {
+            if (!querySnapshot.empty) {
+                const doc = querySnapshot.docs[0];
+                const photo = doc.data();
+
+                // Update Image
+                heroImg.src = photo.src;
+
+                // Update Meta (Optional - assuming elements exist or we inject them)
+                // const metaContainer = document.querySelector('.hero-meta .meta-details');
+                // if (metaContainer) metaContainer.innerHTML = ...
+            }
+        })
+        .catch((error) => {
+            console.error("Error loading hero image: ", error);
+        });
 }
 
 function renderFilmStrip() {
-    // Only if element exists (it might not if on submit page, but we are using modular JS so it's fine)
+    // Only if element exists
+    const filmStripContainer = document.getElementById('film-strip');
     if (!filmStripContainer) return;
+
+    // We can also make this dynamic later
+    const filmStripData = [
+        'https://images.unsplash.com/photo-1502700559166-5792585222ef?auto=format&fit=crop&q=80&w=500&sat=-100',
+        'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=500&sat=-100',
+        'https://images.unsplash.com/photo-1516724562728-afc824a36e84?auto=format&fit=crop&q=80&w=500&sat=-100',
+        'https://images.unsplash.com/photo-1533158388470-9a56699990c6?auto=format&fit=crop&q=80&w=500&sat=-100'
+    ];
 
     filmStripContainer.innerHTML = filmStripData.map(src => `
         <div class="film-item">
@@ -125,16 +187,25 @@ function renderFilmStrip() {
 }
 
 // Global Vouch Toggle
-window.toggleVouch = function (btn) {
-    // Mock Vouch Logic
-    const isVouched = btn.classList.contains('vouched');
-    const countSpan = btn.querySelector('.vouch-count');
-    const iconSpan = btn.querySelector('.vouch-icon');
+// Global Vouch Toggle (Real Firestore Update)
+// Global Vouch Toggle (Real Firestore Update)
+window.toggleVouch = function (btn, docId) {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        alert("Please sign in to vouch/like photos.");
+        window.location.href = 'signin.html';
+        return;
+    }
 
-    let count = parseInt(countSpan.innerText);
+    const isVouched = btn.classList.contains('vouched');
+    const iconSpan = btn.querySelector('.vouch-icon');
+    const countSpan = btn.querySelector('.vouch-count');
+
+    // UI Optimistic Update (Instant feedback)
+    let count = parseInt(countSpan.innerText) || 0;
 
     if (isVouched) {
-        count--;
+        count = Math.max(0, count - 1);
         btn.classList.remove('vouched');
         iconSpan.innerText = '♡';
     } else {
@@ -142,8 +213,20 @@ window.toggleVouch = function (btn) {
         btn.classList.add('vouched');
         iconSpan.innerText = '♥';
     }
-
     countSpan.innerText = count;
+
+    // Firestore Update
+    const increment = firebase.firestore.FieldValue.increment(isVouched ? -1 : 1);
+
+    console.log(`Updating vouch for ${docId}, new val: ${count}`);
+
+    firebase.firestore().collection('photos').doc(docId).update({
+        vouches: increment
+    }).catch(err => {
+        console.error("Vouch failed", err);
+        // Revert UI if needed - skipping for simplicity in MVP
+        alert("Failed to update like. Check your connection.");
+    });
 }
 
 // Event Listeners
