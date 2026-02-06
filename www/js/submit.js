@@ -220,38 +220,63 @@ async function saveToProfile() {
     ctx.drawImage(previewImg, 0, 0, width, height);
 
     // Get Blob
-    canvas.toBlob(async (blob) => {
-        try {
-            // 2. Upload to Firebase Storage
-            const filename = `photos/${user.uid}/${Date.now()}.jpg`;
-            const storageRef = firebase.storage().ref().child(filename);
-            const snapshot = await storageRef.put(blob);
-            const downloadURL = await snapshot.ref.getDownloadURL();
-
-            // 3. Save Metadata to Firestore
-            await firebase.firestore().collection('photos').add({
-                uid: user.uid,
-                photographer: user.displayName || 'Anonymous',
-                src: downloadURL, // The public link
-                title: 'Untitled Capture',
-                camera: metaCamera.value,
-                lens: metaLens.value,
-                iso: metaIso.value,
-                exposure: metaExposure.value,
-                dateCaptured: metaDate.value,
-                vouches: 0,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                tags: ['Film', 'Community'] // Default tags
-            });
-
-            alert('Photo uploaded successfully!');
-            window.location.href = 'index.html'; // Go to feed to see it
-
-        } catch (error) {
-            console.error("Upload failed", error);
-            alert("Upload failed: " + error.message);
+    canvas.toBlob((blob) => {
+        if (!blob) {
+            alert("Error processing image. Please try another file.");
             submitBtn.disabled = false;
             submitBtn.textContent = 'Verify & Publish';
+            return;
         }
+
+        // 2. Upload to Firebase Storage with Progress
+        const filename = `photos/${user.uid}/${Date.now()}.jpg`;
+        const storageRef = firebase.storage().ref().child(filename);
+        const uploadTask = storageRef.put(blob);
+
+        uploadTask.on('state_changed',
+            (snapshot) => {
+                // Progress function
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                submitBtn.textContent = `Uploading ${Math.round(progress)}%...`;
+            },
+            (error) => {
+                // Error function
+                console.error("Upload failed", error);
+                alert("Upload failed: " + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Verify & Publish';
+            },
+            async () => {
+                // Complete function
+                try {
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+
+                    // 3. Save Metadata to Firestore
+                    await firebase.firestore().collection('photos').add({
+                        uid: user.uid,
+                        photographer: user.displayName || 'Anonymous',
+                        src: downloadURL, // The public link
+                        title: 'Untitled Capture',
+                        camera: metaCamera.value,
+                        lens: metaLens.value,
+                        iso: metaIso.value,
+                        exposure: metaExposure.value,
+                        dateCaptured: metaDate.value,
+                        vouches: 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        tags: ['Film', 'Community'] // Default tags
+                    });
+
+                    alert('Photo uploaded successfully!');
+                    window.location.href = 'index.html'; // Go to feed to see it
+                } catch (dbError) {
+                    console.error("Firestore save failed", dbError);
+                    alert("Image uploaded but data save failed: " + dbError.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Retry Save';
+                }
+            }
+        );
+
     }, 'image/jpeg', 0.85);
 }
