@@ -4,34 +4,55 @@ const grid = document.getElementById('my-grid');
 const uploadCount = document.getElementById('upload-count');
 
 // Load Data
+// Load Data
 function loadProfile() {
-    const uploads = JSON.parse(localStorage.getItem('my-uploads') || '[]');
-    uploadCount.textContent = uploads.length;
+    firebase.auth().onAuthStateChanged(user => {
+        if (!user) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px;">Please <a href="signin.html" style="text-decoration:underline;">sign in</a> to view your profile.</p>';
+            return;
+        }
 
-    if (uploads.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.5;">No captures submitted yet. <a href="submit.html" style="text-decoration:underline;">Submit your first photo</a>.</p>';
-        return;
-    }
+        // Update Header
+        document.getElementById('user-name').textContent = user.displayName || 'Photographer';
+        document.getElementById('user-handle').textContent = user.email; // Using email as handle for now
 
-    // Updated render with privacy indicator and click handler
-    grid.innerHTML = uploads.map(photo => `
-        <article class="photo-card" style="aspect-ratio: 3/2; cursor: pointer;" onclick="openLightbox(${photo.id})">
-            ${photo.visibility === 'private' ? '<div class="verified-badge" style="background:#444;">🔒</div>' : '<div class="verified-badge">✓</div>'}
-            
-            <button class="delete-btn" onclick="event.stopPropagation(); deletePhoto(${photo.id})" title="Delete Capture">×</button>
-            <img src="${photo.src}" loading="lazy">
-            <div class="photo-overlay">
-                <!-- Data-heavy overlay style -->
-                <div style="font-size: 0.9rem; font-weight: 500;">${photo.camera || 'Unknown Camera'}</div>
-                <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 2px;">
-                    ${photo.lens || ''} ${photo.iso ? '| ' + photo.iso : ''}
-                </div>
-                <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 4px;">
-                     ${photo.exposure || ''} &bull; ${photo.date}
-                </div>
-            </div>
-        </article>
-    `).join('');
+        // Fetch Photos
+        firebase.firestore().collection('photos')
+            .where('uid', '==', user.uid)
+            .orderBy('createdAt', 'desc')
+            .onSnapshot(snapshot => {
+                const photos = [];
+                snapshot.forEach(doc => photos.push({ id: doc.id, ...doc.data() }));
+
+                uploadCount.textContent = photos.length;
+
+                if (photos.length === 0) {
+                    grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 40px; opacity: 0.5;">No captures submitted yet. <a href="submit.html" style="text-decoration:underline;">Submit your first photo</a>.</p>';
+                    return;
+                }
+
+                grid.innerHTML = photos.map(photo => `
+                    <article class="photo-card" style="aspect-ratio: 3/2; cursor: pointer;" onclick="openLightbox('${photo.id}')">
+                        ${photo.visibility === 'private' ? '<div class="verified-badge" style="background:#444;">🔒</div>' : '<div class="verified-badge">✓</div>'}
+                        
+                        <button class="delete-btn" onclick="event.stopPropagation(); deletePhoto('${photo.id}')" title="Delete Capture">×</button>
+                        <img src="${photo.src}" loading="lazy">
+                        <div class="photo-overlay">
+                            <div style="font-size: 0.9rem; font-weight: 500;">${photo.camera || 'Unknown Camera'}</div>
+                            <div style="font-size: 0.8rem; opacity: 0.8; margin-top: 2px;">
+                                ${photo.lens || ''} ${photo.iso ? '| ' + photo.iso : ''}
+                            </div>
+                            <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 4px;">
+                                 ${photo.exposure || ''} &bull; ${photo.dateCaptured || 'Unknown Date'}
+                            </div>
+                            <div style="margin-top: 8px; font-size: 0.8rem;">
+                                ♥ ${photo.vouches || 0}
+                            </div>
+                        </div>
+                    </article>
+                `).join('');
+            });
+    });
 }
 
 // Lightbox Logic
@@ -48,65 +69,53 @@ const lbClose = document.getElementById('lightbox-close');
 let currentPhotoId = null;
 
 window.openLightbox = function (id) {
-    const uploads = JSON.parse(localStorage.getItem('my-uploads') || '[]');
-    const photo = uploads.find(p => p.id === id);
-    if (!photo) return;
+    // For simplicity, we can fetch the doc or find it in the DOM if we stored data attached to element.
+    // But let's just fetch it quickly or cache it. 
+    // Actually, since we are inside a snapshot listener above, we could store 'currentPhotos' in a variable.
+    // Let's do a direct fetch for simplicity if the id is passed.
 
-    currentPhotoId = id;
+    firebase.firestore().collection('photos').doc(id).get().then(doc => {
+        if (!doc.exists) return;
+        const photo = doc.data();
 
-    lbImg.src = photo.src;
-    lbTitle.textContent = photo.title || 'Untitled';
-    lbCamera.textContent = photo.camera || '--';
-    lbLens.textContent = photo.lens || '--';
-    lbSettings.textContent = `${photo.exposure || ''} ${photo.iso ? 'ISO ' + photo.iso : ''}`;
-    lbDate.textContent = photo.date;
-    lbVisibility.value = photo.visibility || 'public';
+        currentPhotoId = id;
 
-    lightbox.style.display = 'flex';
-}
+        lbImg.src = photo.src;
+        lbTitle.textContent = photo.title || 'Untitled';
+        lbCamera.textContent = photo.camera || '--';
+        lbLens.textContent = photo.lens || '--';
+        lbSettings.textContent = `${photo.exposure || ''} ${photo.iso ? 'ISO ' + photo.iso : ''}`;
+        lbDate.textContent = photo.dateCaptured || '--';
+        lbVisibility.value = photo.visibility || 'public';
 
-// Close handlers
-if (lbClose) {
-    lbClose.addEventListener('click', () => {
-        lightbox.style.display = 'none';
-        currentPhotoId = null;
+        lightbox.style.display = 'flex';
     });
 }
-lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) {
-        lightbox.style.display = 'none';
-        currentPhotoId = null;
-    }
-});
+
+// ... close handlers ... existing ...
 
 // Privacy Toggle
 lbVisibility.addEventListener('change', (e) => {
     if (!currentPhotoId) return;
-
     const newVal = e.target.value;
-    let uploads = JSON.parse(localStorage.getItem('my-uploads') || '[]');
-    const photoIndex = uploads.findIndex(p => p.id === currentPhotoId);
 
-    if (photoIndex > -1) {
-        uploads[photoIndex].visibility = newVal;
-        localStorage.setItem('my-uploads', JSON.stringify(uploads));
-
-        // Re-render grid to update lock icon
-        loadProfile();
-    }
+    firebase.firestore().collection('photos').doc(currentPhotoId).update({
+        visibility: newVal
+    }).catch(err => console.error("Error updating visibility", err));
 });
 
 // Make globally available
 window.deletePhoto = function (id) {
-    // Confirmation skipped for smoother UX (or add custom modal later)
-    // if (!confirm('Are you sure?')) return; 
+    if (!confirm('Are you sure you want to delete this capture?')) return;
 
-    let uploads = JSON.parse(localStorage.getItem('my-uploads') || '[]');
-    uploads = uploads.filter(p => p.id !== id);
-    localStorage.setItem('my-uploads', JSON.stringify(uploads));
-
-    // Refresh
-    loadProfile();
+    firebase.firestore().collection('photos').doc(id).delete()
+        .then(() => {
+            console.log("Document successfully deleted!");
+            // UI updates automatically via onSnapshot
+        })
+        .catch((error) => {
+            console.error("Error removing document: ", error);
+        });
 }
 
 loadProfile();
