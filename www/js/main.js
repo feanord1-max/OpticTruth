@@ -18,6 +18,13 @@ function init() {
         currentUser = user;
         if (user) {
             savedLikes = JSON.parse(localStorage.getItem(`optic-likes-${user.uid}`) || '[]');
+            try {
+                savedLikes = JSON.parse(localStorage.getItem(`optic-likes-${user.uid}`) || '[]');
+                if (!Array.isArray(savedLikes)) savedLikes = [];
+            } catch (e) {
+                console.error("Error parsing likes", e);
+                savedLikes = [];
+            }
         } else {
             savedLikes = [];
         }
@@ -28,6 +35,22 @@ function init() {
     listenForPhotos();
     // loadHeroImage(); // Handled by listenForPhotos
     setupEventListeners();
+
+    // Search Listener
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = realPhotos.filter(photo => {
+                const title = (photo.title || '').toLowerCase();
+                const tags = (photo.tags || []).join(' ').toLowerCase();
+                const photographer = (photo.photographer || '').toLowerCase();
+                const camera = (photo.camera || '').toLowerCase();
+                return title.includes(query) || tags.includes(query) || photographer.includes(query) || camera.includes(query);
+            });
+            updateGalleryUI(filtered);
+        });
+    }
 }
 
 function listenForPhotos() {
@@ -48,15 +71,16 @@ function listenForPhotos() {
         });
 }
 
-function updateGalleryUI() {
+// Update UI (accepts optional photos array, defaults to all realPhotos)
+function updateGalleryUI(photosToRender = realPhotos) {
     if (!galleryGrid) return;
 
-    if (realPhotos.length === 0) {
-        galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: #888;">No photos yet. Be the first to upload!</p>';
+    if (photosToRender.length === 0) {
+        galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: #888;">No photos found.</p>';
         return;
     }
 
-    galleryGrid.innerHTML = realPhotos.map(photo => {
+    galleryGrid.innerHTML = photosToRender.map(photo => {
         const isLiked = savedLikes.includes(photo.id);
         return `
         <article class="photo-card ${photo.type || ''}" data-id="${photo.id}">
