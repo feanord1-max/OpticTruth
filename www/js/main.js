@@ -26,7 +26,7 @@ function init() {
 
     // Start listening to data immediately
     listenForPhotos();
-    loadHeroImage();
+    // loadHeroImage(); // Handled by listenForPhotos
     setupEventListeners();
 }
 
@@ -41,6 +41,7 @@ function listenForPhotos() {
             // Sort: Most Vouches First
             realPhotos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
             updateGalleryUI();
+            updateHeroUI();
         }, (error) => {
             console.error("Error getting photos: ", error);
             if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: red;">Error loading feed. Try refreshing.</p>';
@@ -78,37 +79,31 @@ function updateGalleryUI() {
     `}).join('');
 }
 
-function loadHeroImage() {
+// function loadHeroImage() { ... } replaced by real-time updateHeroUI
+
+function updateHeroUI() {
     const heroImg = document.querySelector('.hero-card img');
-    if (!heroImg) return;
+    if (!heroImg || realPhotos.length === 0) return;
 
-    firebase.firestore().collection('photos')
-        .limit(20)
-        .get()
-        .then((querySnapshot) => {
-            if (!querySnapshot.empty) {
-                const photos = [];
-                querySnapshot.forEach(doc => photos.push(doc.data()));
-                photos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
+    const topPhoto = realPhotos[0]; // Already sorted by vouches
 
-                if (photos.length > 0) {
-                    const topPhoto = photos[0];
-                    heroImg.src = topPhoto.src;
+    // Only update if source changes to prevent flickering, 
+    // but ALWAYS update text in case likes/stats changed
+    if (heroImg.src !== topPhoto.src) {
+        heroImg.src = topPhoto.src;
+    }
 
-                    const badge = document.querySelector('.hero-meta .badge');
-                    if (badge) badge.textContent = `Top Rated: ${topPhoto.title || 'Untitled'}`;
+    const badge = document.querySelector('.hero-meta .badge');
+    if (badge) badge.textContent = `Top Rated: ${topPhoto.title || 'Untitled'}`;
 
-                    const details = document.querySelector('.hero-meta .meta-details');
-                    if (details) {
-                        details.innerHTML = `
-                            <span>${topPhoto.exposure || 'Unknown Exposure'}</span> • 
-                            <span>${topPhoto.camera || 'Analog'}</span> • 
-                            <span>${topPhoto.photographer || 'Anonymous'}</span>
-                        `;
-                    }
-                }
-            }
-        });
+    const details = document.querySelector('.hero-meta .meta-details');
+    if (details) {
+        details.innerHTML = `
+            <span>${topPhoto.exposure || 'Unknown Exposure'}</span> • 
+            <span>${topPhoto.camera || 'Analog'}</span> • 
+            <span>${topPhoto.photographer || 'Anonymous'}</span>
+        `;
+    }
 }
 
 window.toggleVouch = function (btn, docId) {
