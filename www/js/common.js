@@ -88,6 +88,44 @@ function updateNavigation(userLoggedIn) {
             newLink.href = 'signin.html';
             // Default behavior (navigate to href) applies
         }
+        // 3. Handle Username Display
+        let userDisplay = document.getElementById('user-display');
+
+        if (loggedIn) {
+            // Try to get user info
+            let displayName = 'Photographer';
+            try {
+                const userStr = localStorage.getItem('optic-user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    displayName = user.name || user.email.split('@')[0] || 'Photographer';
+                }
+            } catch (e) { }
+
+            if (!userDisplay) {
+                userDisplay = document.createElement('span');
+                userDisplay.id = 'user-display';
+                userDisplay.className = 'nav-user-display'; // For potential CSS
+                userDisplay.style.marginRight = 'var(--spacing-md)';
+                userDisplay.style.fontWeight = '500';
+                userDisplay.style.fontSize = '0.9rem';
+                userDisplay.style.color = 'var(--color-text)';
+
+                // Re-query auth link to ensure we have the live one (since we might have replaced it above)
+                const currentAuthLink = document.getElementById('auth-link');
+                if (currentAuthLink) {
+                    nav.insertBefore(userDisplay, currentAuthLink);
+                } else {
+                    nav.appendChild(userDisplay);
+                }
+            }
+            userDisplay.textContent = `Hi, ${displayName}`;
+            userDisplay.style.display = 'inline';
+        } else {
+            if (userDisplay) {
+                userDisplay.remove();
+            }
+        }
     }
 }
 
