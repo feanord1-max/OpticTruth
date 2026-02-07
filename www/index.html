@@ -60,8 +60,16 @@
                 <div class="hero-buttons">
                     <button class="btn btn-primary" id="hero-upload-btn">Upload Photo</button>
                     <button class="btn btn-secondary" id="hero-create-btn">Create Account</button>
-                    <button class="btn btn-secondary" id="hero-gallery-btn" style="display: none;">View Your
-                        Gallery</button>
+                </div>
+
+                <div class="search-container"
+                    style="margin-top: var(--spacing-lg); max-width: 500px; display: flex; gap: 8px;">
+                    <input type="text" id="search-input" placeholder="Search photos, tags..."
+                        style="flex: 1; padding: 12px 16px; font-size: 1rem; border: 1px solid rgba(0,0,0,0.1); border-radius: 4px; background: rgba(255,255,255,0.9);">
+                    <button class="btn btn-secondary" id="export-btn" title="Export Collection"
+                        style="margin-left: 0; padding: 0 16px;">
+                        ⬇ Export
+                    </button>
                 </div>
             </div>
             <div class="hero-card-container">
@@ -81,13 +89,6 @@
         </section>
 
         <!-- Film Strip Section Removed -->
-
-        <!-- Search Section -->
-        <div class="search-container"
-            style="max-width: var(--container-max-width); margin: 0 auto; padding: 0 var(--spacing-md); margin-bottom: var(--spacing-md);">
-            <input type="text" id="search-input" placeholder="Search photos, tags, or cameras..."
-                style="width: 100%; padding: 12px 16px; font-size: 1rem; border: 1px solid rgba(0,0,0,0.1); border-radius: 4px; background: rgba(0,0,0,0.03);">
-        </div>
 
         <main id="main-content" class="gallery-grid">
             <!-- Photos will be injected here by JS -->
