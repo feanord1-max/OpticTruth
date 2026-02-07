@@ -117,7 +117,8 @@ function updateGalleryUI(photosToRender = realPhotos) {
 // Hero Logic
 function updateHeroUI() {
     const heroImg = document.querySelector('.hero-card img');
-    if (!heroImg || realPhotos.length === 0) return;
+    if (!heroImg) return; // Added check for heroImg
+    if (realPhotos.length === 0) return;
 
     const topPhoto = realPhotos[0]; // Already sorted by vouches
 

@@ -41,9 +41,10 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: var(--spacing-xl);
-    padding: var(--spacing-xl) 0;
+    padding: var(--spacing-md) 0 var(--spacing-xl) 0;
     margin-bottom: var(--spacing-xxl);
     /* More space */
+    /* align-items: center;  Reverted to default or center */
     align-items: center;
 }
 
@@ -51,6 +52,11 @@
     .hero-section {
         grid-template-columns: 1fr 1fr;
     }
+}
+
+.hero-content {
+    align-self: start;
+    /* Ensure text stays at top */
 }
 
 .hero-content h1 {
