@@ -1,3 +1,4 @@
+console.log("Main.js loaded and running");
 // State
 let realPhotos = [];
 let currentUser = null;
@@ -31,10 +32,42 @@ function init() {
     listenForPhotos();
     setupEventListeners();
 
-    // Search Listener (unchanged)
+    // Search Listener
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = realPhotos.filter(photo => {
+                const title = (photo.title || '').toLowerCase();
+                const tags = (photo.tags || []).join(' ').toLowerCase();
+                const photographer = (photo.photographer || '').toLowerCase();
+                const camera = (photo.camera || '').toLowerCase();
+                return title.includes(query) || tags.includes(query) || photographer.includes(query) || camera.includes(query);
+            });
+            updateGalleryUI(filtered);
+        });
+    }
 }
 
-// ... (listenForPhotos - unchanged)
+function listenForPhotos() {
+    console.log("Starting listenForPhotos...");
+    firebase.firestore().collection('photos')
+        .limit(50)
+        .onSnapshot((snapshot) => {
+            console.log("Snapshot received, size:", snapshot.size);
+            realPhotos = [];
+            snapshot.forEach((doc) => {
+                realPhotos.push({ id: doc.id, ...doc.data() });
+            });
+            // Sort: Most Vouches First
+            realPhotos.sort((a, b) => (b.vouches || 0) - (a.vouches || 0));
+            updateGalleryUI();
+            updateHeroUI();
+        }, (error) => {
+            console.error("Error getting photos: ", error);
+            if (galleryGrid) galleryGrid.innerHTML = '<p style="text-align:center; padding: 40px; color: red;">Error loading feed. Try refreshing.</p>';
+        });
+}
 
 // Update UI
 function updateGalleryUI(photosToRender = realPhotos) {
