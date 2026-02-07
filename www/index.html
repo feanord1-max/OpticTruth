@@ -131,11 +131,15 @@
             localStorage.setItem('optic-theme', isDark ? 'dark' : 'light');
         });
 
-        // Link to submit page
-        document.getElementById('submit-link').addEventListener('click', (e) => {
-            e.preventDefault();
-            window.location.href = 'submit.html';
-        });
+        // Link to submit page: Handled by href="submit.html" or common.js
+        const submitLink = document.getElementById('submit-link');
+        if (submitLink) {
+            submitLink.addEventListener('click', (e) => {
+                // e.preventDefault();
+                // window.location.href = 'submit.html';
+                // (Already handled by standard anchor)
+            });
+        }
     </script>
 </body>
 

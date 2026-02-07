@@ -5,7 +5,13 @@ let currentUser = null;
 let savedLikes = [];
 let savedCollection = []; // New Collection State
 
-// ... (DOM Elements - unchanged)
+// DOM Elements
+const galleryGrid = document.getElementById('main-content');
+const modal = document.getElementById('photo-modal');
+const modalImg = document.getElementById('modal-image');
+const modalTitle = document.getElementById('modal-title');
+const modalMeta = document.getElementById('modal-meta');
+const closeBtn = document.querySelector('.close-btn');
 
 function init() {
     firebase.auth().onAuthStateChanged((user) => {
