@@ -94,7 +94,11 @@ function updateHeroUI() {
     }
 
     const badge = document.querySelector('.hero-meta .badge');
-    if (badge) badge.textContent = `Top Rated: ${topPhoto.title || 'Untitled'}`;
+    if (badge) {
+        badge.textContent = `🏆 Community Favorite: ${topPhoto.title || 'Untitled'}`;
+        badge.style.background = 'var(--color-text)';
+        badge.style.color = 'var(--color-bg)';
+    }
 
     const details = document.querySelector('.hero-meta .meta-details');
     if (details) {

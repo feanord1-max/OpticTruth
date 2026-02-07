@@ -73,6 +73,28 @@
 .hero-card {
     aspect-ratio: 4/5;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    position: relative;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    /* Subtle gold border */
+}
+
+/* Optional: "Pulse" animation for the popular status */
+@keyframes pulse-gold {
+    0% {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+
+    50% {
+        box-shadow: 0 20px 40px rgba(255, 215, 0, 0.2);
+    }
+
+    100% {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.hero-card {
+    animation: pulse-gold 4s infinite ease-in-out;
 }
 
 .hero-meta {

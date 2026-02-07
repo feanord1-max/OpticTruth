@@ -251,6 +251,23 @@ async function saveToProfile() {
                 try {
                     const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
 
+                    // 2.5 Auto-Tagging with AI
+                    let aiTags = [];
+                    try {
+                        submitBtn.textContent = 'Analyzing Image...';
+                        const model = await cocoSsd.load();
+                        const predictions = await model.detect(previewImg);
+                        // Filter and Map
+                        aiTags = predictions
+                            .filter(p => p.score > 0.6)
+                            .map(p => p.class);
+                        // Unique tags only
+                        aiTags = [...new Set(aiTags)];
+                        console.log("AI Tags Detected:", aiTags);
+                    } catch (aiError) {
+                        console.warn("AI Tagging failed, skipping:", aiError);
+                    }
+
                     // 3. Save Metadata to Firestore
                     await firebase.firestore().collection('photos').add({
                         uid: user.uid,
@@ -264,7 +281,7 @@ async function saveToProfile() {
                         dateCaptured: metaDate.value,
                         vouches: 0,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        tags: ['Film', 'Community'] // Default tags
+                        tags: ['Film', 'Community', ...aiTags] // Metadata + AI Tags
                     });
 
                     alert('Photo uploaded successfully!');
