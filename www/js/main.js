@@ -1,9 +1,8 @@
-console.log("Main.js loaded and running");
 // State
 let realPhotos = [];
 let currentUser = null;
 let savedLikes = [];
-let savedCollection = []; // New Collection State
+let savedCollection = [];
 
 // DOM Elements
 const galleryGrid = document.getElementById('main-content');
@@ -56,11 +55,9 @@ function init() {
 }
 
 function listenForPhotos() {
-    console.log("Starting listenForPhotos...");
     firebase.firestore().collection('photos')
         .limit(50)
         .onSnapshot((snapshot) => {
-            console.log("Snapshot received, size:", snapshot.size);
             realPhotos = [];
             snapshot.forEach((doc) => {
                 realPhotos.push({ id: doc.id, ...doc.data() });
@@ -117,7 +114,33 @@ function updateGalleryUI(photosToRender = realPhotos) {
     `}).join('');
 }
 
-// ... (updateHeroUI - unchanged)
+// Hero Logic
+function updateHeroUI() {
+    const heroImg = document.querySelector('.hero-card img');
+    if (!heroImg || realPhotos.length === 0) return;
+
+    const topPhoto = realPhotos[0]; // Already sorted by vouches
+
+    if (heroImg.src !== topPhoto.src) {
+        heroImg.src = topPhoto.src;
+    }
+
+    const badge = document.querySelector('.hero-meta .badge');
+    if (badge) {
+        badge.textContent = `🏆 Community Favorite: ${topPhoto.title || 'Untitled'}`;
+        badge.style.background = 'var(--color-text)';
+        badge.style.color = 'var(--color-bg)';
+    }
+
+    const details = document.querySelector('.hero-meta .meta-details');
+    if (details) {
+        details.innerHTML = `
+            <span>${topPhoto.exposure || 'Unknown Exposure'}</span> • 
+            <span>${topPhoto.camera || 'Analog'}</span> • 
+            <span>${topPhoto.photographer || 'Anonymous'}</span>
+        `;
+    }
+}
 
 // Collection Logic
 window.toggleCollection = function (btn, docId) {
@@ -170,34 +193,6 @@ window.exportCollection = function () {
     downloadAnchorNode.remove();
 }
 
-// Hero Logic
-function updateHeroUI() {
-    const heroImg = document.querySelector('.hero-card img');
-    if (!heroImg || realPhotos.length === 0) return;
-
-    const topPhoto = realPhotos[0]; // Already sorted by vouches
-
-    if (heroImg.src !== topPhoto.src) {
-        heroImg.src = topPhoto.src;
-    }
-
-    const badge = document.querySelector('.hero-meta .badge');
-    if (badge) {
-        badge.textContent = `🏆 Community Favorite: ${topPhoto.title || 'Untitled'}`;
-        badge.style.background = 'var(--color-text)';
-        badge.style.color = 'var(--color-bg)';
-    }
-
-    const details = document.querySelector('.hero-meta .meta-details');
-    if (details) {
-        details.innerHTML = `
-            <span>${topPhoto.exposure || 'Unknown Exposure'}</span> • 
-            <span>${topPhoto.camera || 'Analog'}</span> • 
-            <span>${topPhoto.photographer || 'Anonymous'}</span>
-        `;
-    }
-}
-
 // Vouch Logic
 window.toggleVouch = function (btn, docId) {
     if (!currentUser) {
@@ -248,10 +243,6 @@ function setupEventListeners() {
     }
 
     // Hero Buttons
-    const joinBtn = document.getElementById('join-btn');
-    const viewBtn = document.getElementById('view-gallery-btn');
-    // Note: IDs in HTML might be hero-create-btn / hero-gallery-btn. 
-    // Ensuring we don't error if they are missing or named differently.
     const heroCreateBtn = document.getElementById('hero-create-btn');
     if (heroCreateBtn) {
         heroCreateBtn.addEventListener('click', () => window.location.href = 'signin.html');
@@ -260,7 +251,6 @@ function setupEventListeners() {
     if (heroUploadBtn) {
         heroUploadBtn.addEventListener('click', () => window.location.href = 'submit.html');
     }
-
 
     if (galleryGrid) {
         galleryGrid.addEventListener('click', (e) => {
@@ -283,7 +273,6 @@ function setupEventListeners() {
 }
 
 function openModal(id) {
-    // Find in tracking array
     const photo = realPhotos.find(p => p.id === id);
     if (!photo) return;
 
