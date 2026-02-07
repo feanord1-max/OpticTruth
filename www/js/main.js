@@ -131,138 +131,145 @@ window.exportCollection = function () {
     downloadAnchorNode.remove();
 }
 
-window.toggleVouch = function (btn, docId) {
-    // ... (unchanged)
+// Hero Logic
+function updateHeroUI() {
+    const heroImg = document.querySelector('.hero-card img');
+    if (!heroImg || realPhotos.length === 0) return;
 
-    // function loadHeroImage() { ... } replaced by real-time updateHeroUI
+    const topPhoto = realPhotos[0]; // Already sorted by vouches
 
-    function updateHeroUI() {
-        const heroImg = document.querySelector('.hero-card img');
-        if (!heroImg || realPhotos.length === 0) return;
+    if (heroImg.src !== topPhoto.src) {
+        heroImg.src = topPhoto.src;
+    }
 
-        const topPhoto = realPhotos[0]; // Already sorted by vouches
+    const badge = document.querySelector('.hero-meta .badge');
+    if (badge) {
+        badge.textContent = `🏆 Community Favorite: ${topPhoto.title || 'Untitled'}`;
+        badge.style.background = 'var(--color-text)';
+        badge.style.color = 'var(--color-bg)';
+    }
 
-        // Only update if source changes to prevent flickering, 
-        // but ALWAYS update text in case likes/stats changed
-        if (heroImg.src !== topPhoto.src) {
-            heroImg.src = topPhoto.src;
-        }
-
-        const badge = document.querySelector('.hero-meta .badge');
-        if (badge) {
-            badge.textContent = `🏆 Community Favorite: ${topPhoto.title || 'Untitled'}`;
-            badge.style.background = 'var(--color-text)';
-            badge.style.color = 'var(--color-bg)';
-        }
-
-        const details = document.querySelector('.hero-meta .meta-details');
-        if (details) {
-            details.innerHTML = `
+    const details = document.querySelector('.hero-meta .meta-details');
+    if (details) {
+        details.innerHTML = `
             <span>${topPhoto.exposure || 'Unknown Exposure'}</span> • 
             <span>${topPhoto.camera || 'Analog'}</span> • 
             <span>${topPhoto.photographer || 'Anonymous'}</span>
         `;
-        }
+    }
+}
+
+// Vouch Logic
+window.toggleVouch = function (btn, docId) {
+    if (!currentUser) {
+        alert("Please sign in to vouch/like photos.");
+        window.location.href = 'signin.html';
+        return;
     }
 
-    window.toggleVouch = function (btn, docId) {
-        if (!currentUser) {
-            alert("Please sign in to vouch/like photos.");
-            window.location.href = 'signin.html';
-            return;
-        }
+    const iconSpan = btn.querySelector('.vouch-icon');
+    const countSpan = btn.querySelector('.vouch-count');
 
-        const iconSpan = btn.querySelector('.vouch-icon');
-        const countSpan = btn.querySelector('.vouch-count');
+    // Check Local State
+    const index = savedLikes.indexOf(docId);
+    const isVouched = index > -1;
 
-        // Check Local State
-        const index = savedLikes.indexOf(docId);
-        const isVouched = index > -1;
+    let count = parseInt(countSpan.innerText) || 0;
 
-        let count = parseInt(countSpan.innerText) || 0;
-
-        if (isVouched) {
-            // Unlike
-            count = Math.max(0, count - 1);
-            btn.classList.remove('vouched');
-            iconSpan.innerText = '♡';
-            savedLikes.splice(index, 1);
-        } else {
-            // Like
-            count++;
-            btn.classList.add('vouched');
-            iconSpan.innerText = '♥';
-            savedLikes.push(docId);
-        }
-
-        // Save Local State using UID Key
-        localStorage.setItem(`optic-likes-${currentUser.uid}`, JSON.stringify(savedLikes));
-        countSpan.innerText = count;
-
-        // Firestore Update
-        const increment = firebase.firestore.FieldValue.increment(isVouched ? -1 : 1);
-        firebase.firestore().collection('photos').doc(docId).update({
-            vouches: increment
-        }).catch(err => console.error("Vouch failed", err));
+    if (isVouched) {
+        // Unlike
+        count = Math.max(0, count - 1);
+        btn.classList.remove('vouched');
+        iconSpan.innerText = '♡';
+        savedLikes.splice(index, 1);
+    } else {
+        // Like
+        count++;
+        btn.classList.add('vouched');
+        iconSpan.innerText = '♥';
+        savedLikes.push(docId);
     }
 
-    function setupEventListeners() {
-        // Export Button
-        const exportBtn = document.getElementById('export-btn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', exportCollection);
-        }
+    // Save Local State using UID Key
+    localStorage.setItem(`optic-likes-${currentUser.uid}`, JSON.stringify(savedLikes));
+    countSpan.innerText = count;
 
-        // Hero Buttons
-        const joinBtn = document.getElementById('join-btn');
-        const viewBtn = document.getElementById('view-gallery-btn');
+    // Firestore Update
+    const increment = firebase.firestore.FieldValue.increment(isVouched ? -1 : 1);
+    firebase.firestore().collection('photos').doc(docId).update({
+        vouches: increment
+    }).catch(err => console.error("Vouch failed", err));
+}
 
-        if (galleryGrid) {
-            galleryGrid.addEventListener('click', (e) => {
-                const card = e.target.closest('.photo-card');
-                if (card && !e.target.closest('.vouch-btn')) {
-                    openModal(card.dataset.id);
-                }
-            });
-        }
+function setupEventListeners() {
+    // Export Button
+    const exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportCollection);
+    }
 
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
-        if (modal) {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal();
-            });
-        }
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal) closeModal();
+    // Hero Buttons
+    const joinBtn = document.getElementById('join-btn');
+    const viewBtn = document.getElementById('view-gallery-btn');
+    // Note: IDs in HTML might be hero-create-btn / hero-gallery-btn. 
+    // Ensuring we don't error if they are missing or named differently.
+    const heroCreateBtn = document.getElementById('hero-create-btn');
+    if (heroCreateBtn) {
+        heroCreateBtn.addEventListener('click', () => window.location.href = 'signin.html');
+    }
+    const heroUploadBtn = document.getElementById('hero-upload-btn');
+    if (heroUploadBtn) {
+        heroUploadBtn.addEventListener('click', () => window.location.href = 'submit.html');
+    }
+
+
+    if (galleryGrid) {
+        galleryGrid.addEventListener('click', (e) => {
+            const card = e.target.closest('.photo-card');
+            if (card && !e.target.closest('.vouch-btn')) {
+                openModal(card.dataset.id);
+            }
         });
     }
 
-    function openModal(id) {
-        // Find in tracking array
-        const photo = realPhotos.find(p => p.id === id);
-        if (!photo) return;
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal) closeModal();
+    });
+}
 
-        if (modalImg) modalImg.src = photo.src;
-        if (modalTitle) modalTitle.textContent = photo.title || 'Untitled';
-        if (modalMeta) {
-            const tags = photo.tags ? photo.tags.join(', ') : '';
-            modalMeta.textContent = `Captured by ${photo.photographer || 'Anonymous'} on ${photo.camera || 'Unknown Camera'}. ${tags}`;
-        }
+function openModal(id) {
+    // Find in tracking array
+    const photo = realPhotos.find(p => p.id === id);
+    if (!photo) return;
 
-        modal.classList.remove('hidden');
-        void modal.offsetWidth;
-        modal.classList.add('visible');
-        document.body.style.overflow = 'hidden';
+    if (modalImg) modalImg.src = photo.src;
+    if (modalTitle) modalTitle.textContent = photo.title || 'Untitled';
+    if (modalMeta) {
+        const tags = photo.tags ? photo.tags.join(', ') : '';
+        modalMeta.textContent = `Captured by ${photo.photographer || 'Anonymous'} on ${photo.camera || 'Unknown Camera'}. ${tags}`;
     }
 
-    function closeModal() {
-        if (!modal) return;
-        modal.classList.remove('visible');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            if (modalImg) modalImg.src = '';
-        }, 400);
-        document.body.style.overflow = '';
-    }
+    modal.classList.remove('hidden');
+    void modal.offsetWidth;
+    modal.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+}
 
-    init();
+function closeModal() {
+    if (!modal) return;
+    modal.classList.remove('visible');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        if (modalImg) modalImg.src = '';
+    }, 400);
+    document.body.style.overflow = '';
+}
+
+// Start Init
+init();
