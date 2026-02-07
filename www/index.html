@@ -73,14 +73,25 @@
                 </div>
             </div>
             <div class="hero-card-container">
+                <h3
+                    style="margin-bottom: 12px; font-weight: 500; font-size: 1.1rem; color: var(--color-text-light); text-transform: uppercase; letter-spacing: 0.05em;">
+                    Community Favorite
+                </h3>
                 <article class="photo-card hero-card">
                     <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
                         alt="Film Portrait" style="background: #eee; min-height: 400px; object-fit: cover;">
                     <div class="photo-overlay visible">
                         <div class="hero-meta">
-                            <span class="badge">Photo of the Day</span>
-                            <div class="meta-details">
-                                <span>1/250s</span> • <span>f/2.8</span> • <span>Portra 400</span>
+                            <!-- External Title Used Instead of Badge -->
+
+                            <!-- Static Message (Persistent) -->
+                            <div class="hero-params" style="font-size: 0.95em; margin-bottom: 6px; font-weight: 500;">
+                                Current Most Liked Photo.
+                            </div>
+
+                            <!-- Dynamic Tech Specs (Targeted by JS) -->
+                            <div class="meta-details" style="font-size: 0.85em; opacity: 0.8;">
+                                <!-- Specs injected here -->
                             </div>
                         </div>
                     </div>
